@@ -93,12 +93,12 @@ void loop() {
   temp_high = temperature + 0.5; // 0.5 °C threshold to start and stop boiler
   humidity = dht.readHumidity(); // humidity is being read, a more sophisticated algorithm would use it to determine if heating is needed
   server.handleClient();
-  if ((power==0) || (variable < temp_high)) {
+  if ((power==0) || (variable < temperature)) {
     powerstatus = "Όχι";
     digitalWrite(led_startPin, HIGH);
     digitalWrite(powerPin, LOW);
   }
-  else if ((power==1) && (variable >= temperature)) {
+  else if ((power==1) && (variable >= temp_high)) {
     powerstatus = "Ναι";
     digitalWrite(led_startPin, LOW);
     digitalWrite(powerPin, HIGH);
