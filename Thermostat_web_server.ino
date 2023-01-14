@@ -46,19 +46,28 @@ void handleRoot() {
   }
     String html = "<html><head>"; 
     html += "<meta charset='UTF-8'>";
-    html += "<style> h1{text-align:center;}h2{text-align:center;}.temp{font-size:150%;color:#FF0000;}.hum{font-size:150%;color:#0000FF;}input.larger{height:50; width:50;color:#77FF77;}input.num{height:100; width:160;color:#FF6666;font-size:400%;}.open{font-size:180%;color:#77FF77;}</style>";
-    html += "</head><body>";
-    html += "<br>";
+    //styles
+    html += "<style>h1{text-align:center;}</style>";
+    html += "<style>h2{text-align:center;}h3{font-size:40%;}</style>";
+    html += "<style>.temp{font-size:150%;color:#FF0000;}</style>";
+    html += "<style>.hum{font-size:150%;color:#0000FF;}</style>";
+    html += "<style>.btn{width:350px;font-size:30px}</style>";
+    html += "<style>.open{font-size:150%;color:#006d70;}</style>";
+    html += "<style>input.chkbox{height:100px;width:100px;box-sizing:border-box;background:#006d70;}</style>";
+    html += "<style>input.num{height:100px; width:140px;color:#FF6666;font-size:400%;}</style>";
+    html += "</head>";
+    html += "<body>";
+    html += "<h3><br></h3>";
     html += "<h1>Ρύθμιση θερμοστάτη και λειτουργίας</h1>"; // adsust thermostat and function
     html += "<form method='post'>";
-    html += "<br>";
+    html += "<h3><br></h3>";
     html += "<h2>Τρέχουσες συνθήκες:</h2>"; // current conditions
     html += "<h2 class=temp>Θερμοκρασία : " + String(temperature).substring(0,4) + " °C</h2>"; //temperature
     html += "<h2 class=hum>Υγρασία: " + String(humidity).substring(0,2) + " %</h2>"; //humidity
-    html += "<br>";
-    html += "<h2 class=temp><label for='variable'>Επιθυμητή θερμοκρασία: </label></h2>"; //desired temperature
+    html += "<h3><br></h3>";
+    html += "<h2><label for='variable'>Επιθυμητή θερμοκρασία: </label></h2>"; //desired temperature
 
-    if (server.method() == HTTP_POST) {
+    if (server.method() == HTTP_POST) { // run the same code again asif button was pressed twice
       if (server.hasArg("variable")) {
         variable = server.arg("variable").toInt();
         Serial.print("variable=");
@@ -73,16 +82,24 @@ void handleRoot() {
         }
       Serial.print("power=");
       Serial.println(power);
+      if ((power==0) || (variable < temperature)) {
+        powerstatus = "ΟΧΙ"; // power is OFF ("NO")
+        digitalWrite(led_startPin, HIGH); 
+        digitalWrite(powerPin, LOW);
+      }
+      else if ((power==1) && (variable >= temp_high)) {
+        powerstatus = "ΝΑΙ"; // power is ON ("YES")
+        digitalWrite(led_startPin, LOW);
+        digitalWrite(powerPin, HIGH);
+      }
     }
     check_status = digitalRead(ledPin) == LOW ? "checked" : ""; // update the check status variable
-
     html += "<h1 class=temp><input class=num type='number' min='15' max='25' name='variable' value='" + String(variable) + "'></h1>";
-    html += "<h1><label class=open for='led'>Άνοιξε:</label></h1>"; //select to start
-    html += "<h1><input type='checkbox' class=larger name='led' value='on' " + check_status + "></h1>";
-    html += "<h2><label for='power'> Λειτουργία καυστήρα: </label>"+ String(powerstatus)+"</h2>"; // is boiler "on"? (yes/no)
-    html += "<h2><br></h2>";
-    html += "<h2><input type='submit' value='Αποστολή/Ανανέωση'></h2>"; // send/refresh (maybe automatic refresh would be better)
-    html += "<h2>(αφού ρυθμίσεις, πάτησε δύο φορές το κουμπί)</h2>"; // press button twice (one to set, one to refresh)   
+    html += "<h1><label class=open for='led'>Αναμμένο:</label></h1>"; //select to start
+    html += "<h1><input type='checkbox' class=chkbox name='led' value='on' " + check_status + "></h1>";
+    html += "<h2><label for='power'>Καυστήρας σε λειτουργία: </label>"+ String(powerstatus)+"</h2>"; // is boiler "on"? (yes/no)
+    html += "<h3><br></h3>";
+    html += "<h2><input type='submit' class=btn value='Αποστολή/Ανανέωση'></h2>"; // send and refresh (automatic refresh would be better)
     html += "</form>";
     html += "</body></html>";
     server.send(200, "text/html", html);
@@ -94,13 +111,13 @@ void loop() {
   humidity = dht.readHumidity(); // humidity is being read, a more sophisticated algorithm would use it to determine if heating is needed
   server.handleClient();
   if ((power==0) || (variable < temperature)) {
-    powerstatus = "Όχι";
+    powerstatus = "ΟΧΙ";
     digitalWrite(led_startPin, HIGH);
     digitalWrite(powerPin, LOW);
   }
   else if ((power==1) && (variable >= temp_high)) {
-    powerstatus = "Ναι";
+    powerstatus = "ΝΑΙ";
     digitalWrite(led_startPin, LOW);
     digitalWrite(powerPin, HIGH);
   }
-} 
+}
